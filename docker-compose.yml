@@ -1,0 +1,9 @@
+services:
+  ts3bot:
+    build: .
+    container_name: ts3_afk_bot
+    ports:
+      - "5000:8080" # Aceder à UI em http://localhost:5000
+    volumes:
+      - ./bot_data:/app/config # PERSISTÊNCIA: Ficheiro settings.json fica nesta pasta local
+    restart: always

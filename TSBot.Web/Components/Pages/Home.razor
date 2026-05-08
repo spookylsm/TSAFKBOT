@@ -1,0 +1,64 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using TSBot.Shared
+@inject ConfigService ConfigService
+
+<PageTitle>Configuração do Bot TS3</PageTitle>
+
+<div class="container mt-4">
+    <h2>Configuração do Bot AFK</h2>
+    <hr />
+
+    <EditForm Model="@config" OnValidSubmit="Guardar">
+        <div class="mb-3">
+            <label>IP do Servidor TeamSpeak</label>
+            <InputText @bind-Value="config.ServerAddress" class="form-control" />
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label>Query Username</label>
+                <InputText @bind-Value="config.QueryUsername" class="form-control" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label>Query Password</label>
+                <InputText @bind-Value="config.QueryPassword" class="form-control" type="password" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label>ID do Canal AFK</label>
+                <InputNumber @bind-Value="config.AfkChannelId" class="form-control" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label>Tempo Máximo (Minutos)</label>
+                <InputNumber @bind-Value="config.IdleTimeThresholdMinutes" class="form-control" />
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Guardar Configurações</button>
+        
+        @if (guardado)
+        {
+            <span class="text-success ms-3">Guardado com sucesso! O bot vai usar as novas definições no próximo ciclo (30s).</span>
+        }
+    </EditForm>
+</div>
+
+@code {
+    private BotConfig config = new();
+    private bool guardado = false;
+
+    protected override void OnInitialized()
+    {
+        config = ConfigService.Get();
+    }
+
+    private void Guardar()
+    {
+        ConfigService.Save(config);
+        guardado = true;
+        Task.Delay(3000).ContinueWith(_ => { guardado = false; InvokeAsync(StateHasChanged); });
+    }
+}
