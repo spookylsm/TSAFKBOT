@@ -2,7 +2,7 @@ namespace TSBot.Shared;
 
 public class BotConfig
 {
-    public string ServerAddress { get; set; } = "127.0.0.1";
+    public string ServerAddress { get; set; } = "";
     public int QueryPort { get; set; } = 10011;
     public string QueryUsername { get; set; } = "serveradmin";
     public string QueryPassword { get; set; } = "";

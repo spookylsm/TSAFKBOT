@@ -59,42 +59,42 @@ h1:focus {
     text-align: start;
 }
 
-/* --- FORÇAR O BLAZOR A USAR O TEMA BOOTSWATCH --- */
+/* --- FULL BLAZOR SIDEBAR FIX FOR BOOTSWATCH --- */
 
-/* 1. Força a página, o menu lateral e a área dos botões a usar o fundo do Tema */
+/* 1. Force the page, sidebar, and scrollable nav to use the Theme's background */
 body, html, .page, .sidebar, .nav-scrollable {
     background-color: var(--bs-body-bg) !important;
     background-image: none !important;
 }
 
-/* 2. Topos (Barra do título à esquerda e barra de cima à direita) */
+/* 2. Top headers (Left title bar and top right bar) */
 .sidebar .top-row, main > .top-row {
     background-color: var(--bs-body-bg) !important;
-    border-bottom: none !important; /* <-- Linha branca removida aqui */
+    border-bottom: none !important;
 }
 
-/* 3. Linha vertical para separar o menu do resto da página */
+/* 3. Vertical line separating the menu from the page content */
 .sidebar {
-    border-right: none !important; /* <-- Linha branca removida aqui */
+    border-right: none !important;
 }
 
-/* 4. Textos do menu ganham a cor automática do tema (Branco no Dark, Preto no Light) */
+/* 4. Menu text automatically adapts to theme color */
 .navbar-brand, .top-row a, .nav-item .nav-link {
     color: var(--bs-body-color) !important;
 }
 
-/* 5. Cor do botão ativo (ex: Home) usando a cor de destaque do Tema */
+/* 5. Active button color using Theme's primary highlight */
 .nav-item .nav-link.active {
     background-color: var(--bs-primary) !important;
     color: #ffffff !important;
 }
 
-/* 6. Efeito suave ao passar o rato nos botões do menu lateral */
+/* 6. Smooth hover effect on sidebar buttons */
 .nav-item .nav-link:hover {
     background-color: rgba(128, 128, 128, 0.2) !important;
 }
 
-/* 7. Remove qualquer fundo extra que o Blazor teime em colocar */
+/* 7. Remove any extra background applied natively by Blazor */
 article.content {
     background-color: transparent !important;
 }

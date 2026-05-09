@@ -1,7 +1,7 @@
+namespace TSBot.Shared;
+
 using System.Text.Json;
 using TeamSpeak3QueryApi.Net.Specialized;
-
-namespace TSBot.Shared;
 
 public class ConfigService 
 {
@@ -28,10 +28,10 @@ public class ConfigService
         return JsonSerializer.Deserialize<BotConfig>(json) ?? new BotConfig();
     }
 
-    public void Save(BotConfig c) 
+    public void Save(BotConfig config) 
     {
         var options = new JsonSerializerOptions { WriteIndented = true };
-        File.WriteAllText(_path, JsonSerializer.Serialize(c, options));
+        File.WriteAllText(_path, JsonSerializer.Serialize(config, options));
     }
     
     public async Task<List<ChannelView>> GetChannelsAsync(BotConfig config)
@@ -69,7 +69,7 @@ public class ConfigService
     
     public async Task<List<UserViewModel>> GetOnlineClientsAsync(BotConfig config)
     {
-        var utilizadoresAtivos = new List<UserViewModel>();
+        var activeUsers = new List<UserViewModel>();
 
         using var client = new TeamSpeakClient(config.ServerAddress, config.QueryPort);
         await client.Connect();
@@ -80,21 +80,21 @@ public class ConfigService
 
         foreach (var c in clients)
         {
+            // Ignore the bot itself and Query Clients (Type 1)
             if ((int)c.Type == 1) continue;
 
             var userInfo = await client.GetClientInfo(c.Id);
 
-            utilizadoresAtivos.Add(new UserViewModel
+            activeUsers.Add(new UserViewModel
             {
                 Id = c.Id,
                 Nickname = c.NickName,
                 IdleTime = userInfo.IdleTime.ToString(@"hh\:mm\:ss"),
-                Version = userInfo.Version 
+                Version = userInfo.Version
             });
         }
 
         await client.Logout();
-
-        return utilizadoresAtivos;
+        return activeUsers;
     }
 }

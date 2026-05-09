@@ -2,39 +2,39 @@
 @rendermode InteractiveServer
 @using TSBot.Shared
 @inject ConfigService ConfigService
-@inject AdminSession Sessao
-@inject IJSRuntime Js 
+@inject AdminSession Session
+@inject IJSRuntime Js
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <h2>TS3 Admin Panel</h2>
         
         <div class="d-flex align-items-center">
-            @* O MENU DROPDOWN DOS TEMAS BOOTSWATCH *@
-            <select class="form-select form-select-sm w-auto me-3 shadow-sm" style="min-width: 150px;" @onchange="MudarTema">
-                <option value="cyborg" selected="@(Sessao.TemaAtual == "cyborg")">🤖 Cyborg (Dark)</option>
-                <option value="vapor" selected="@(Sessao.TemaAtual == "vapor")">🌃 Vapor (Neon)</option>
-                <option value="quartz" selected="@(Sessao.TemaAtual == "quartz")">💎 Quartz (Glass)</option>
-                <option value="darkly" selected="@(Sessao.TemaAtual == "darkly")">🌙 Darkly (Clean)</option>
-                <option value="flatly" selected="@(Sessao.TemaAtual == "flatly")">☀️ Flatly (Light)</option>
-                <option value="zephyr" selected="@(Sessao.TemaAtual == "zephyr")">💨 Zephyr (Light)</option>
+            @* THEME SELECTOR *@
+            <select class="form-select form-select-sm w-auto me-3 shadow-sm" style="min-width: 150px;" @onchange="ChangeTheme">
+                <option value="cyborg" selected="@(Session.CurrentTheme == "cyborg")">🤖 Cyborg (Dark)</option>
+                <option value="vapor" selected="@(Session.CurrentTheme == "vapor")">🌃 Vapor (Neon)</option>
+                <option value="quartz" selected="@(Session.CurrentTheme == "quartz")">💎 Quartz (Glass)</option>
+                <option value="darkly" selected="@(Session.CurrentTheme == "darkly")">🌙 Darkly (Clean)</option>
+                <option value="flatly" selected="@(Session.CurrentTheme == "flatly")">☀️ Flatly (Light)</option>
+                <option value="zephyr" selected="@(Session.CurrentTheme == "zephyr")">💨 Zephyr (Light)</option>
             </select>
 
-            @if (Sessao.EstaLigado)
+            @if (Session.IsConnected)
             {
-                <span class="badge bg-success me-3 fs-6">Ligado: @config.ServerAddress</span>
-                <button class="btn btn-outline-danger btn-sm shadow-sm" @onclick="EfetuarLogout">🚪 Logout</button>
+                <span class="badge bg-success me-3 fs-6">Connected: @config.ServerAddress</span>
+                <button class="btn btn-outline-danger btn-sm shadow-sm" @onclick="PerformLogout">🚪 Logout</button>
             }
         </div>
     </div>
 
-    @if (!Sessao.EstaLigado)
+    @if (!Session.IsConnected)
     {
         <div class="card p-4 shadow border-0">
-            <h4 class="mb-4">Autenticação ServerQuery</h4>
+            <h4 class="mb-4">ServerQuery Authentication</h4>
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label text-muted fw-bold">Endereço do Servidor (IP)</label>
+                    <label class="form-label text-muted fw-bold">Server Address (IP)</label>
                     <input @bind="config.ServerAddress" class="form-control" />
                 </div>
                 <div class="col-md-3">
@@ -46,8 +46,8 @@
                     <input type="password" @bind="config.QueryPassword" class="form-control" />
                 </div>
             </div>
-            <button class="btn btn-primary w-100 mt-4 py-2 fw-bold shadow-sm" @onclick="Entrar" disabled="@processando">
-                @(processando ? "A ligar..." : "Ligar ao Servidor")
+            <button class="btn btn-primary w-100 mt-4 py-2 fw-bold shadow-sm" @onclick="Login" disabled="@isProcessing">
+                @(isProcessing ? "Connecting..." : "Connect to Server")
             </button>
         </div>
     }
@@ -55,35 +55,35 @@
     {
         <ul class="nav nav-tabs mb-3">
             <li class="nav-item">
-                <button class="nav-link @(aba == "users" ? "active fw-bold" : "")" @onclick='() => aba = "users"'>👥 Utilizadores Online</button>
+                <button class="nav-link @(activeTab == "users" ? "active fw-bold" : "")" @onclick='() => activeTab = "users"'>👥 Online Users</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link @(aba == "config" ? "active fw-bold" : "")" @onclick='() => aba = "config"'>⚙️ Configurações AFK</button>
+                <button class="nav-link @(activeTab == "config" ? "active fw-bold" : "")" @onclick='() => activeTab = "config"'>⚙️ AFK Settings</button>
             </li>
         </ul>
 
         <div class="card p-4 shadow border-0">
-            @if (aba == "users")
+            @if (activeTab == "users")
             {
                 <div class="d-flex justify-content-between mb-3 align-items-center">
-                    <h5 class="mb-0">Gestão de Clientes</h5>
-                    <button class="btn btn-sm btn-secondary shadow-sm" @onclick="AtualizarUsers">🔄 Atualizar Lista</button>
+                    <h5 class="mb-0">Client Management</h5>
+                    <button class="btn btn-sm btn-secondary shadow-sm" @onclick="RefreshUsers">🔄 Refresh List</button>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead>
                             <tr>
                                 <th>Nickname</th>
-                                <th>Tempo Inativo</th>
-                                <th class="text-end">Ações</th>
+                                <th>Idle Time</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @if (Sessao.Users.Count == 0)
+                            @if (Session.Users.Count == 0)
                             {
-                                <tr><td colspan="3" class="text-center text-muted py-4">Nenhum utilizador online neste momento.</td></tr>
+                                <tr><td colspan="3" class="text-center text-muted py-4">No users currently online.</td></tr>
                             }
-                            @foreach (var u in Sessao.Users) {
+                            @foreach (var u in Session.Users) {
                                 <tr>
                                     <td><strong>@u.Nickname</strong></td>
                                     <td><span class="badge bg-info text-dark">@u.IdleTime</span></td>
@@ -99,96 +99,94 @@
             }
             else
             {
-                <h5 class="mb-4">Definições do Bot de Background</h5>
+                <h5 class="mb-4">Background Bot Settings</h5>
                 <div class="row g-4">
                     <div class="col-md-6">
-                        <label class="form-label text-muted fw-bold">Canal de Destino (AFK):</label>
+                        <label class="form-label text-muted fw-bold">Destination Channel (AFK):</label>
                         <select @bind="config.AfkChannelId" class="form-select shadow-sm">
-                            <option value="0">-- Selecione um Canal --</option>
-                            @foreach(var c in Sessao.Canais) { <option value="@c.Id">@c.Name</option> }
+                            <option value="0">-- Select a Channel --</option>
+                            @foreach(var c in Session.Channels) { <option value="@c.Id">@c.Name</option> }
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label text-muted fw-bold">Tempo Máximo (Minutos):</label>
+                        <label class="form-label text-muted fw-bold">Max Idle Time (Minutes):</label>
                         <input type="number" @bind="config.IdleTimeThresholdMinutes" class="form-control shadow-sm" />
                     </div>
                 </div>
-                <button class="btn btn-success mt-4 w-100 py-2 fw-bold shadow-sm" @onclick="Salvar">💾 Gravar Definições</button>
+                <button class="btn btn-success mt-4 w-100 py-2 fw-bold shadow-sm" @onclick="SaveSettings">💾 Save Settings</button>
             }
         </div>
     }
     
-    @if (!string.IsNullOrEmpty(msg)) 
+    @if (!string.IsNullOrEmpty(alertMessage)) 
     { 
         <div class="alert alert-dismissible alert-info mt-3 shadow-sm border-0">
-            <button type="button" class="btn-close" @onclick='() => msg = ""'></button>
-            @msg
+            <button type="button" class="btn-close" @onclick='() => alertMessage = ""'></button>
+            @alertMessage
         </div> 
     }
 </div>
 
 @code {
-    private bool processando = false;
-    private string aba = "users";
-    private string msg = "";
+    private bool isProcessing = false;
+    private string activeTab = "users";
+    private string alertMessage = "";
     private BotConfig config = new();
 
-    // Quando a página arranca, garante que o tema escolhido na sessão está aplicado
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await Js.InvokeVoidAsync("mudarTemaCSS", Sessao.TemaAtual);
+            await Js.InvokeVoidAsync("mudarTemaCSS", Session.CurrentTheme);
         }
     }
 
     protected override void OnInitialized() 
     {
         config = ConfigService.Get();
-        
-        config.QueryPassword = ""; 
+        config.QueryPassword = ""; // Clear password visually for security
     }
 
-    // Lógica que troca de tema no ecrã inteiro
-    private async Task MudarTema(ChangeEventArgs e)
+    private async Task ChangeTheme(ChangeEventArgs e)
     {
-        Sessao.TemaAtual = e.Value?.ToString() ?? "cyborg";
-        await Js.InvokeVoidAsync("mudarTemaCSS", Sessao.TemaAtual);
+        Session.CurrentTheme = e.Value?.ToString() ?? "cyborg";
+        await Js.InvokeVoidAsync("mudarTemaCSS", Session.CurrentTheme);
     }
 
-    private async Task Entrar() {
-        processando = true;
-        msg = "";
+    private async Task Login() {
+        isProcessing = true;
+        alertMessage = "";
         StateHasChanged(); 
 
         try {
-            var taskLigacao = ConfigService.GetChannelsAsync(config);
-            if (await Task.WhenAny(taskLigacao, Task.Delay(5000)) == taskLigacao) {
-                Sessao.Canais = await taskLigacao; 
-                Sessao.Users = await ConfigService.GetOnlineClientsAsync(config);
-                Sessao.EstaLigado = true; 
+            var connectionTask = ConfigService.GetChannelsAsync(config);
+            
+            if (await Task.WhenAny(connectionTask, Task.Delay(5000)) == connectionTask) {
+                Session.Channels = await connectionTask; 
+                Session.Users = await ConfigService.GetOnlineClientsAsync(config);
+                Session.IsConnected = true; 
                 ConfigService.Save(config); 
             } else {
-                msg = "Tempo limite excedido. O servidor TS3 não respondeu.";
+                alertMessage = "Connection timeout. The TS3 server did not respond.";
             }
         } catch (Exception ex) { 
-            msg = $"Falha na ligação: {ex.Message}"; 
+            alertMessage = $"Connection failed: {ex.Message}"; 
         } finally { 
-            processando = false; 
+            isProcessing = false; 
             StateHasChanged(); 
         }
     }
 
-    private async Task AtualizarUsers() => Sessao.Users = await ConfigService.GetOnlineClientsAsync(config);
-    private async Task Kick(int id) { await ConfigService.KickClientAsync(config, id, "Expulso via Painel"); await AtualizarUsers(); }
-    private async Task Ban(int id) { await ConfigService.BanClientAsync(config, id, 3600, "Banido via Painel"); await AtualizarUsers(); }
-    private void Salvar() { ConfigService.Save(config); msg = "Definições guardadas! O Bot já está a usar as novas regras."; }
+    private async Task RefreshUsers() => Session.Users = await ConfigService.GetOnlineClientsAsync(config);
+    private async Task Kick(int id) { await ConfigService.KickClientAsync(config, id, "Kicked via Admin Panel"); await RefreshUsers(); }
+    private async Task Ban(int id) { await ConfigService.BanClientAsync(config, id, 3600, "Banned via Admin Panel"); await RefreshUsers(); }
+    private void SaveSettings() { ConfigService.Save(config); alertMessage = "Settings saved! The bot is now using the new rules."; }
     
-    private void EfetuarLogout() {
-        Sessao.EstaLigado = false;
-        Sessao.Users.Clear();
-        Sessao.Canais.Clear();
+    private void PerformLogout() {
+        Session.IsConnected = false;
+        Session.Users.Clear();
+        Session.Channels.Clear();
         config.QueryPassword = ""; 
-        msg = "Sessão terminada com sucesso. O Bot AFK continua a executar no servidor.";
+        alertMessage = "Successfully logged out. The AFK bot continues running on the server.";
     }
 }
