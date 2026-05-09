@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <ResourcePreloader />
-    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
+    
+    <link id="theme-stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/cyborg/bootstrap.min.css" rel="stylesheet" />
+
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["TSBot.Web.styles.css"]" />
     <ImportMap />
@@ -15,9 +17,15 @@
 </head>
 
 <body>
-    <Routes />
-    <ReconnectModal />
-    <script src="@Assets["_framework/blazor.web.js"]"></script>
+<Routes />
+<ReconnectModal />
+<script src="@Assets["_framework/blazor.web.js"]"></script>
+
+<script>
+        window.mudarTemaCSS = (tema) => {
+            document.getElementById('theme-stylesheet').href = `https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/${tema}/bootstrap.min.css`;
+        };
+    </script>
 </body>
 
 </html>

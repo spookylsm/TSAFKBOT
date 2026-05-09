@@ -1,54 +1,63 @@
-namespace TSBot.Core;
-
-using TeamSpeak3QueryApi.Net.Specialized;
 using TSBot.Shared;
+using TeamSpeak3QueryApi.Net.Specialized;
+
+namespace TSBot.Core;
 
 public class AfkWorker : BackgroundService
 {
-    private const string ConfigPath = "/app/config/settings.json";
+    private readonly ConfigService _configService;
     private readonly ILogger<AfkWorker> _logger;
 
-    public AfkWorker(ILogger<AfkWorker> logger) => _logger = logger;
+    public AfkWorker(ConfigService configService, ILogger<AfkWorker> logger) 
+    {
+        _configService = configService;
+        _logger = logger;
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _logger.LogInformation("AfkWorker iniciado. A monitorizar o servidor TS3...");
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                if (!File.Exists(ConfigPath)) goto Wait;
-
-                var config = System.Text.Json.JsonSerializer.Deserialize<BotConfig>(File.ReadAllText(ConfigPath));
-                if (config == null || string.IsNullOrEmpty(config.QueryPassword)) goto Wait;
-
-                using (var client = new TeamSpeakClient(config.ServerAddress, config.QueryPort))
+                var config = _configService.Get();
+                
+                if (!string.IsNullOrEmpty(config.QueryPassword) && config.AfkChannelId > 0)
                 {
-                    await client.Connect();
-                    await client.Login(config.QueryUsername, config.QueryPassword);
-                    await client.UseServer(config.VirtualServerId);
-
-                    var clientList = await client.GetClients();
-                    foreach (var user in clientList)
+                    using (var client = new TeamSpeakClient(config.ServerAddress, config.QueryPort))
                     {
-                        var userInfo = await client.GetClientInfo(user.Id);
+                        await client.Connect();
+                        await client.Login(config.QueryUsername, config.QueryPassword);
+                        await client.UseServer(config.VirtualServerId);
+
+                        var clientList = await client.GetClients();
                         
-                        // Ignora o próprio bot e Query Clients (Type 1)
-                        if ((int)user.Type == 1) continue;
-
-                        if (userInfo.ChannelId != config.AfkChannelId &&
-                            userInfo.IdleTime.TotalMinutes >= config.IdleTimeThresholdMinutes)
+                        foreach (var user in clientList)
                         {
-                            _logger.LogInformation($"A mover {user.NickName} para o canal AFK...");
-                            await client.MoveClient(user.Id, config.AfkChannelId);
-                        }
-                    }
+                            if ((int)user.Type == 1) continue;
 
-                    await client.Logout();
+                            var userInfo = await client.GetClientInfo(user.Id);
+                            
+                            if (userInfo.ChannelId != config.AfkChannelId &&
+                                userInfo.IdleTime.TotalMinutes >= config.IdleTimeThresholdMinutes)
+                            {
+                                _logger.LogInformation($"A mover {user.NickName} para o canal AFK...");
+                                await client.MoveClient(user.Id, config.AfkChannelId);
+                            }
+                        }
+
+                        await client.Logout();
+                    }
                 }
             }
-            catch (Exception ex) { _logger.LogError($"Error: {ex.Message}"); }
+            catch (Exception ex) 
+            { 
+                _logger.LogDebug($"Erro de ligação temporário no Worker: {ex.Message}");
+            }
 
-            Wait:
+            // Aguarda 30 segundos até à próxima verificação
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
         }
     }

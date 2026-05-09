@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.DataProtection;
 using TSBot.Core;
-using TSBot.Web;
+using TSBot.Shared;
 using TSBot.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +13,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddAntiforgery();
 
 builder.Services.AddSingleton<ConfigService>();
+builder.Services.AddScoped<AdminSession>();
 builder.Services.AddHostedService<AfkWorker>();
 
 var app = builder.Build();

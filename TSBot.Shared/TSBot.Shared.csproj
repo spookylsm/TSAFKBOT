@@ -6,4 +6,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Reference Include="TeamSpeak3QueryApi">
+      <HintPath>..\..\..\.nuget\packages\teamspeak3queryapi\1.13.0\lib\netstandard1.3\TeamSpeak3QueryApi.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TeamSpeak3QueryApi" Version="1.13.0" />
+  </ItemGroup>
+
 </Project>

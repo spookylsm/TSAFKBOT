@@ -58,3 +58,43 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* --- FORÇAR O BLAZOR A USAR O TEMA BOOTSWATCH --- */
+
+/* 1. Força a página, o menu lateral e a área dos botões a usar o fundo do Tema */
+body, html, .page, .sidebar, .nav-scrollable {
+    background-color: var(--bs-body-bg) !important;
+    background-image: none !important;
+}
+
+/* 2. Topos (Barra do título à esquerda e barra de cima à direita) */
+.sidebar .top-row, main > .top-row {
+    background-color: var(--bs-body-bg) !important;
+    border-bottom: none !important; /* <-- Linha branca removida aqui */
+}
+
+/* 3. Linha vertical para separar o menu do resto da página */
+.sidebar {
+    border-right: none !important; /* <-- Linha branca removida aqui */
+}
+
+/* 4. Textos do menu ganham a cor automática do tema (Branco no Dark, Preto no Light) */
+.navbar-brand, .top-row a, .nav-item .nav-link {
+    color: var(--bs-body-color) !important;
+}
+
+/* 5. Cor do botão ativo (ex: Home) usando a cor de destaque do Tema */
+.nav-item .nav-link.active {
+    background-color: var(--bs-primary) !important;
+    color: #ffffff !important;
+}
+
+/* 6. Efeito suave ao passar o rato nos botões do menu lateral */
+.nav-item .nav-link:hover {
+    background-color: rgba(128, 128, 128, 0.2) !important;
+}
+
+/* 7. Remove qualquer fundo extra que o Blazor teime em colocar */
+article.content {
+    background-color: transparent !important;
+}
