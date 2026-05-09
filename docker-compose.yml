@@ -1,8 +1,8 @@
 services:
-  ts3bot:
-    image: spookylsm2/ts3-afk-bot:latest
+  tsbot:
+    image: spookylsm2/ts-afk-bot:latest
     build: .
-    container_name: ts3_afk_bot
+    container_name: ts_afk_bot
     ports:
       - "5000:8080" 
     volumes:

@@ -1,5 +1,0 @@
-<Solution>
-  <Project Path="TSBot.Core/TSBot.Core.csproj" />
-  <Project Path="TSBot.Shared/TSBot.Shared.csproj" />
-  <Project Path="TSBot.Web/TSBot.Web.csproj" />
-</Solution>
