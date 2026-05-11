@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TSBot.Core\TSBot.Core.csproj" />
+    <ProjectReference Include="..\TSBot.Shared\TSBot.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="TeamSpeak3QueryApi">
+      <HintPath>..\..\..\.nuget\packages\teamspeak3queryapi\1.13.0\lib\netstandard1.3\TeamSpeak3QueryApi.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TeamSpeak3QueryApi" Version="1.13.0" />
+  </ItemGroup>
+
+</Project>

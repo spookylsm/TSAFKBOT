@@ -1,0 +1,192 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using TSBot.Shared
+@inject ConfigService ConfigService
+@inject AdminSession Session
+@inject IJSRuntime Js
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <h2>TS3 Admin Panel</h2>
+        
+        <div class="d-flex align-items-center">
+            @* THEME SELECTOR *@
+            <select class="form-select form-select-sm w-auto me-3 shadow-sm" style="min-width: 150px;" @onchange="ChangeTheme">
+                <option value="cyborg" selected="@(Session.CurrentTheme == "cyborg")">🤖 Cyborg (Dark)</option>
+                <option value="vapor" selected="@(Session.CurrentTheme == "vapor")">🌃 Vapor (Neon)</option>
+                <option value="quartz" selected="@(Session.CurrentTheme == "quartz")">💎 Quartz (Glass)</option>
+                <option value="darkly" selected="@(Session.CurrentTheme == "darkly")">🌙 Darkly (Clean)</option>
+                <option value="flatly" selected="@(Session.CurrentTheme == "flatly")">☀️ Flatly (Light)</option>
+                <option value="zephyr" selected="@(Session.CurrentTheme == "zephyr")">💨 Zephyr (Light)</option>
+            </select>
+
+            @if (Session.IsConnected)
+            {
+                <span class="badge bg-success me-3 fs-6">Connected: @config.ServerAddress</span>
+                <button class="btn btn-outline-danger btn-sm shadow-sm" @onclick="PerformLogout">🚪 Logout</button>
+            }
+        </div>
+    </div>
+
+    @if (!Session.IsConnected)
+    {
+        <div class="card p-4 shadow border-0">
+            <h4 class="mb-4">ServerQuery Authentication</h4>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label text-muted fw-bold">Server Address (IP)</label>
+                    <input @bind="config.ServerAddress" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted fw-bold">Username</label>
+                    <input @bind="config.QueryUsername" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted fw-bold">Password</label>
+                    <input type="password" @bind="config.QueryPassword" class="form-control" />
+                </div>
+            </div>
+            <button class="btn btn-primary w-100 mt-4 py-2 fw-bold shadow-sm" @onclick="Login" disabled="@isProcessing">
+                @(isProcessing ? "Connecting..." : "Connect to Server")
+            </button>
+        </div>
+    }
+    else
+    {
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item">
+                <button class="nav-link @(activeTab == "users" ? "active fw-bold" : "")" @onclick='() => activeTab = "users"'>👥 Online Users</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(activeTab == "config" ? "active fw-bold" : "")" @onclick='() => activeTab = "config"'>⚙️ AFK Settings</button>
+            </li>
+        </ul>
+
+        <div class="card p-4 shadow border-0">
+            @if (activeTab == "users")
+            {
+                <div class="d-flex justify-content-between mb-3 align-items-center">
+                    <h5 class="mb-0">Client Management</h5>
+                    <button class="btn btn-sm btn-secondary shadow-sm" @onclick="RefreshUsers">🔄 Refresh List</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nickname</th>
+                                <th>Idle Time</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Session.Users.Count == 0)
+                            {
+                                <tr><td colspan="3" class="text-center text-muted py-4">No users currently online.</td></tr>
+                            }
+                            @foreach (var u in Session.Users) {
+                                <tr>
+                                    <td><strong>@u.Nickname</strong></td>
+                                    <td><span class="badge bg-info text-dark">@u.IdleTime</span></td>
+                                    <td class="text-end">
+                                        <button class="btn btn-warning btn-sm me-1 shadow-sm" @onclick="() => Kick(u.Id)">Kick</button>
+                                        <button class="btn btn-danger btn-sm shadow-sm" @onclick="() => Ban(u.Id)">Ban</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <h5 class="mb-4">Background Bot Settings</h5>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fw-bold">Destination Channel (AFK):</label>
+                        <select @bind="config.AfkChannelId" class="form-select shadow-sm">
+                            <option value="0">-- Select a Channel --</option>
+                            @foreach(var c in Session.Channels) { <option value="@c.Id">@c.Name</option> }
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fw-bold">Max Idle Time (Minutes):</label>
+                        <input type="number" @bind="config.IdleTimeThresholdMinutes" class="form-control shadow-sm" />
+                    </div>
+                </div>
+                <button class="btn btn-success mt-4 w-100 py-2 fw-bold shadow-sm" @onclick="SaveSettings">💾 Save Settings</button>
+            }
+        </div>
+    }
+    
+    @if (!string.IsNullOrEmpty(alertMessage)) 
+    { 
+        <div class="alert alert-dismissible alert-info mt-3 shadow-sm border-0">
+            <button type="button" class="btn-close" @onclick='() => alertMessage = ""'></button>
+            @alertMessage
+        </div> 
+    }
+</div>
+
+@code {
+    private bool isProcessing = false;
+    private string activeTab = "users";
+    private string alertMessage = "";
+    private BotConfig config = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Js.InvokeVoidAsync("mudarTemaCSS", Session.CurrentTheme);
+        }
+    }
+
+    protected override void OnInitialized() 
+    {
+        config = ConfigService.Get();
+        config.QueryPassword = ""; // Clear password visually for security
+    }
+
+    private async Task ChangeTheme(ChangeEventArgs e)
+    {
+        Session.CurrentTheme = e.Value?.ToString() ?? "cyborg";
+        await Js.InvokeVoidAsync("mudarTemaCSS", Session.CurrentTheme);
+    }
+
+    private async Task Login() {
+        isProcessing = true;
+        alertMessage = "";
+        StateHasChanged(); 
+
+        try {
+            var connectionTask = ConfigService.GetChannelsAsync(config);
+            
+            if (await Task.WhenAny(connectionTask, Task.Delay(5000)) == connectionTask) {
+                Session.Channels = await connectionTask; 
+                Session.Users = await ConfigService.GetOnlineClientsAsync(config);
+                Session.IsConnected = true; 
+                ConfigService.Save(config); 
+            } else {
+                alertMessage = "Connection timeout. The TS3 server did not respond.";
+            }
+        } catch (Exception ex) { 
+            alertMessage = $"Connection failed: {ex.Message}"; 
+        } finally { 
+            isProcessing = false; 
+            StateHasChanged(); 
+        }
+    }
+
+    private async Task RefreshUsers() => Session.Users = await ConfigService.GetOnlineClientsAsync(config);
+    private async Task Kick(int id) { await ConfigService.KickClientAsync(config, id, "Kicked via Admin Panel"); await RefreshUsers(); }
+    private async Task Ban(int id) { await ConfigService.BanClientAsync(config, id, 3600, "Banned via Admin Panel"); await RefreshUsers(); }
+    private void SaveSettings() { ConfigService.Save(config); alertMessage = "Settings saved! The bot is now using the new rules."; }
+    
+    private void PerformLogout() {
+        Session.IsConnected = false;
+        Session.Users.Clear();
+        Session.Channels.Clear();
+        config.QueryPassword = ""; 
+        alertMessage = "Successfully logged out. The AFK bot continues running on the server.";
+    }
+}

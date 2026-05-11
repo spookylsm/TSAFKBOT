@@ -1,0 +1,43 @@
+# ========================
+# Pastas de Compilação .NET
+# ========================
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+Publish/
+
+# ========================
+# IDEs (Rider / Visual Studio)
+# ========================
+.idea/
+.vs/
+*.user
+*.suo
+*.sln.docstates
+
+# ========================
+# Ficheiros de Sistema (Lixo OS)
+# ========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ========================
+# Dados do teu Bot (MUITO IMPORTANTE)
+# ========================
+# Ignorar as configurações e dados locais para não vazar a password do TS3!
+bot_data/
+config/
+appsettings*.json
+
+# ========================
+# Outros temporários / logs
+# ========================
+*.log
+*.tmp
+*.bak
+*.cache
