@@ -22,7 +22,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: spookylsm2/ts-afk-bot:latest
+          tags: |
+            spookylsm2/ts-afk-bot:latest
+            spookylsm2/ts-afk-bot:v1.0.${{ github.run_number }}
 
       - name: Update Docker Hub README
         uses: peter-evans/dockerhub-description@v4
