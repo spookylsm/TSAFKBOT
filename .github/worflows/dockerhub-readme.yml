@@ -1,0 +1,20 @@
+name: Sync Docker Hub README
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  sync-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update Docker Hub Description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: spookylsm2/ts-afk-bot
